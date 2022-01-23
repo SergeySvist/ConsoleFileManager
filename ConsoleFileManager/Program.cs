@@ -1,7 +1,6 @@
-﻿using System.Text;
+﻿using CFM;
+using System.Text;
 Console.OutputEncoding = Encoding.UTF8;
 
-
-Console.WriteLine("first test");
-Console.WriteLine("first test");
-
+Button b = new Button(new System.Drawing.Point(10, 10), "Open");
+b.Print();
