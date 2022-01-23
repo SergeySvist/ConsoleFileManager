@@ -1,4 +1,6 @@
-﻿namespace CFM;
+﻿using System.Drawing;
+
+namespace CFM;
 
 class Button
 {

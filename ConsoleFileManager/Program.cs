@@ -1,7 +1,6 @@
-﻿using System.Text;
+﻿using CFM;
+using System.Text;
 Console.OutputEncoding = Encoding.UTF8;
 
-
-Console.WriteLine("first test");
-Console.WriteLine("first test");
-
+WiM t = new WiM(new(0,0), new(0,0));
+t.StartWrite();
