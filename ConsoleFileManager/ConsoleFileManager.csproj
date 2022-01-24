@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="SupportedClasses\" />
+    <Compile Remove="SupportedClasses\**" />
+    <EmbeddedResource Remove="SupportedClasses\**" />
+    <None Remove="SupportedClasses\**" />
   </ItemGroup>
 
 </Project>

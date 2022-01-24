@@ -1,146 +1,177 @@
 ﻿using System.Drawing;
-
 namespace CFM
 {
     internal class WiM
     {
-        int cur = 0;
-        string str;
-        Point StartP, EndP;
-        public WiM(Point startP, Point endP)
+        int x, y;
+        int _currentPos;
+        string _text;
+        Point StartPos { get; set; }
+        Point EndPos { get; set; }
+        public WiM(string text, Point startPos, Point endPos)
         {
-            this.StartP = startP;
-            this.EndP = endP;
-            str = "";
+            this.StartPos = startPos;
+            this.EndPos = endPos;
+            _text = text;
+            _currentPos = _text.Length;
         }
-        void Clear()
+        private void PressEnter()
         {
-            Console.CursorVisible = false;
-            for(int i = StartP.X; i <= EndP.X; i++)
+            _currentPos++;
+            _text = _text.Insert(_currentPos - 1, "\n");
+        }
+        private void PressBackspace()
+        {
+            if (_currentPos > 0)
             {
-                for(int j = StartP.Y; j <= EndP.Y; j++)
-                {
-                    Console.Write(' ');
-                }
+                _text = _text.Remove(_currentPos - 1, 1);
+                _currentPos--;
             }
-            Console.CursorVisible = true;
-            Console.SetCursorPosition(StartP.X, StartP.Y);
         }
-        void SetCurPos()
+        private void PressDelete()
         {
-            int x = 0, y = 0;
-            for(int i = 0; i < str.Length; i++)
+            if (_currentPos + 1 > 0)
+                _text = _text.Remove(_currentPos, 1);
+        }
+        private void PressArrow(ConsoleKey key)
+        {
+            switch (key)
             {
-                if (i == cur)
+                case ConsoleKey.RightArrow:
+                    if (_currentPos < _text.Length)
+                        _currentPos++;
                     break;
-                x++;
-                if(str[i] == '\n')
+                case ConsoleKey.LeftArrow:
+                    if (_currentPos > 0)
+                        _currentPos--;
+                    break;
+                case ConsoleKey.UpArrow:
+                    if (y > 1)
+                    {
+                        y--;
+                        FindCurPos();
+                    }
+                    break;
+                case ConsoleKey.DownArrow:
+                    y++;
+                    FindCurPos();
+                    break;
+            }
+        }
+        private void FindCurPos()
+        {
+            int tX = 0, tY = 0;
+            for (int i = 0; i < _text.Length; i++)
+            {
+                _currentPos = i;
+                if (tY == y - 1 && tX == x)
+                    break;
+                else if(tY == y - 1 &&
+                    (StartPos.X + tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0'))
+                {
+                    break;
+                }
+                if (StartPos.X + tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
+                {
+                    tX = 0;
+                    tY++;
+                }
+                tX++;
+            }
+            x = tX;
+            y = tY;
+        }
+        private void SetCurPos()
+        {
+            x = StartPos.X;
+            y = StartPos.Y;
+            for (int i = 0; i < _text.Length; i++)
+            {
+                if (i == _currentPos)
+                    break;
+                if (StartPos.X + x >= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
                 {
                     x = 0;
                     y++;
                 }
+                x++;
             }
             Console.SetCursorPosition(x, y);
         }
-        void Save()
+        public void Read()
         {
-            string writePath = @"test.txt";
-            try
+            int x = 0,
+                y = 0;
+            Console.CursorVisible = false;
+            for (int i = 0; i < _text.Length; i++)
             {
-                using (StreamWriter sw = new StreamWriter(writePath, false, System.Text.Encoding.Default))
+                Console.SetCursorPosition(StartPos.X + x, StartPos.Y + y);
+                Console.Write(_text[i]);
+                x++;
+                if (_text[i] == '\n' || _text[i] == '\0')
                 {
-                    sw.Write(str);
+                    for (int j = x + StartPos.X; x < EndPos.X - 1; j++, x++)
+                    {
+                        Console.SetCursorPosition(j - 1, StartPos.Y + y);
+                        Console.Write(' ');
+                    }
                 }
-                Console.SetCursorPosition(10, 15);
-                Console.WriteLine("Запись выполнена");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-        void Set()
-        {
-            string path = @"test.txt";
-
-            try
-            {
-                using (StreamReader sr = new StreamReader(path))
+                if (StartPos.X + x >= EndPos.X - 1)
                 {
-                    str = sr.ReadToEnd();
+                    y++;
+                    x = 0;
                 }
             }
-            catch (Exception e)
-            {
-            }
-            cur = str.Length;
+            FeelSpace(x, y);
+            Console.CursorVisible = true;
         }
-        public void StartWrite()
+        private void FeelSpace(int x, int y)
         {
-            string tmp = "";
-            Set();
+            for (int j = x + StartPos.X; j < EndPos.X; j++)
+            {
+                Console.SetCursorPosition(j, StartPos.Y + y);
+                Console.Write(' ');
+            }
+            for (int i = StartPos.Y + y; i < StartPos.Y; i++)
+            {
+                for (int j = StartPos.X; j < EndPos.X; j++)
+                {
+                    Console.SetCursorPosition(i, j);
+                    Console.Write(' ');
+                }
+            }
+        }
+        static void ClearBuffer()
+        {
+            while (Console.KeyAvailable)
+            {
+                Console.ReadKey(false);
+            }
+        }
+        public string Write()
+        {
             ConsoleKeyInfo key;
-            Clear();
-            Console.Write(str);
             while (true)
             {
-                Clear();
-                Console.Write(str);
+                ClearBuffer();
+                Read();
                 SetCurPos();
                 key = Console.ReadKey(true);
                 if (key.Key == ConsoleKey.Enter)
-                {
-                    cur++;
-                    tmp = "\n";
-                    str = str.Insert(cur - 1, tmp);
-                }
+                    PressEnter();
                 else if (key.Key == ConsoleKey.Backspace)
-                {
-                    if (cur > 0)
-                    {
-                        str = str.Remove(cur - 1, 1);
-                        cur--;
-                    }
-
-                }
-                else if (key.Key == ConsoleKey.Delete)
-                {
-                    if (cur+1 > 0)
-                    {
-                        str = str.Remove(cur, 1);
-                        //cur--;
-                    }
-
-                }
-                else if (key.Key == ConsoleKey.Insert)
-                {
-                    Save();
-                    return;
-                }
+                    PressBackspace();
                 else if ((int)key.Key >= 37 && (int)key.Key <= 40)
-                {
-                    switch (key.Key)
-                    {
-                        case ConsoleKey.RightArrow:
-                            if (cur < str.Length)
-                                cur++;
-                            break;
-                        case ConsoleKey.LeftArrow:
-                            if (cur > 0)
-                                cur--;
-                            break;
-                    }
-                }
+                    PressArrow(key.Key);
+                else if (key.Key == ConsoleKey.Delete)
+                    PressDelete();
+                else if (key.Key == ConsoleKey.Insert)
+                    return _text;
                 else
                 {
-                    cur++;
-                    tmp = "";
-                    tmp += key.KeyChar;
-                    str = str.Insert(cur - 1, tmp);
+                    _currentPos++;
+                    _text = _text.Insert(_currentPos - 1, $"{key.KeyChar}");
                 }
-                Clear();
-                  
-                Console.Write(str);
             }
         }
     }
