@@ -1,6 +1,8 @@
 ﻿namespace CFM;
 using System.Drawing;
 
+
+
 class Button
 {
     public Point firstPoint;
