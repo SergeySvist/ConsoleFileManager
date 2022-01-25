@@ -13,16 +13,25 @@ class FileManager
     public FileManager()
     {
         firstPoint = new Point(0, 0);
-        Path = @"D:\";
+        Path = @"C:\";
         dirs = new List<FileSystemInfo>();
     }
 
-    public void PrintDirectoryList(int index=-1)
+    public void PrintDirectoryList(int index=-2)
     {
         UpgradeDirectoryList();
-        Console.Clear();
+        //Console.Clear();
+        Console.SetCursorPosition(0, 0);
         Console.WriteLine(Path);
         Console.WriteLine();
+        if (index == -1)
+        {
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
+        }
+        Console.WriteLine("...");
+        Console.ResetColor();
+
         for (int i = 0; i < dirs.Count; i++)
         {
             if (i == index-1)
@@ -30,7 +39,6 @@ class FileManager
                 Console.BackgroundColor = ConsoleColor.White;
                 Console.ForegroundColor = ConsoleColor.Black;
             }
-
             if (dirs[i] is FileInfo)
                 Console.WriteLine($"{dirs[i].Name}: {(dirs[i] as FileInfo).Length / 1024} KB, {dirs[i].LastWriteTimeUtc}");
             else
@@ -62,37 +70,62 @@ class FileManager
         Process.Start(file.FullName);
     }
 
+    public void OpenBackFolder()
+    {
+        Path = Path.TrimEnd('\\');
+        int position = Path.LastIndexOf(@"\");
+        Path = Path.Substring(0, position+1);
+    }
+
     public void Choose(int index)
     {
-        if (dirs[index - 1].Attributes == FileAttributes.Directory)
+        if (index > 0)
         {
-            Path += $@"{dirs[index - 1].Name}\";
-            UpgradeDirectoryList();
+            if (dirs[index - 1].Extension == "")//dirs[index - 1].Attributes == FileAttributes.Directory)
+            {
+                Console.Clear();
+                Path += $@"{dirs[index - 1].Name}\";
+                UpgradeDirectoryList();
+            }
+            else if (dirs[index - 1].Extension == ".exe")
+            {
+                RunExe(dirs[index - 1]);
+            }
+            else
+            {
+                OpenDefault(Path + $@"{dirs[index - 1].Name}");
+            }
         }
-        else if(dirs[index-1].Extension == ".exe")
+        else if (index == -1)
         {
-            RunExe(dirs[index - 1]);
+            Console.Clear();
+            OpenBackFolder();
         }
-        else
+    }
+
+    static void ClearBuffer()
+    {
+        while (Console.KeyAvailable)
         {
-            OpenDefault(Path + $@"{dirs[index - 1].Name}");
+            Console.ReadKey(false);
         }
     }
 
     public void Start()
     {
-        int i = 0;
+        int i = -1;
         ConsoleKey key = ConsoleKey.Spacebar;
         while (key != ConsoleKey.Escape)
         {
+            ClearBuffer();
             if (key == ConsoleKey.DownArrow)
                 i++;
             if (key == ConsoleKey.UpArrow)
                 i--;
-            if (i < 0)
+            if (i < -1)
                 i = dirs.Count;
             if (i > dirs.Count)
-                i = 0;
+                i = -1;
 
             PrintDirectoryList(i);
 
