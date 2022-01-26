@@ -1,14 +1,4 @@
 ﻿using CFM;
-//int x = 50,
-//    y = 20;
-//Shield();
-//string str;
-//Restore();
-//WiM wm = new(str, new(1,1), new(x,y));
-//str = wm.Write();
-//Save();
-
-
 //void Shield()
 //{
 //    for (int i = 0; i <= x; i++)
