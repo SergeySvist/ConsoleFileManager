@@ -7,14 +7,9 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
-
-<<<<<<< HEAD
   <ItemGroup>
     <Compile Remove="SupportedClasses\**" />
     <EmbeddedResource Remove="SupportedClasses\**" />
     <None Remove="SupportedClasses\**" />
   </ItemGroup>
-
-=======
->>>>>>> 81712cf2b258a8d02260b3e727fdd44292e5163f
 </Project>
