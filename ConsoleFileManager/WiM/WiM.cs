@@ -108,7 +108,7 @@ namespace CFM
                     break;
                 if (StartPos.X + x >= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
                 {
-                    x = 0;
+                    x = StartPos.X;
                     y++;
                 }
             }

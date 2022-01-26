@@ -8,20 +8,33 @@ class FileManager
 {
     public string Path { get; set; }
     List<FileSystemInfo> dirs;
+
     const int fileLeft = 25,
         fileBoard = 25,
         namePos = 25,
         sizePos = namePos + 25,
         dataPos = sizePos + 20,
         typePos = dataPos + 25;
+
     int endPosY,
         ind = 0;
+
+    string info = "Information\n" +
+        "\nFile Manager\n" +
+        "\nNew file: press N" +
+        "\nZip folder: press Z" +
+        "\nUnZip: press U" +
+        "\nOpen:press Enter" +
+        "\nDelete: press Delete\n" +
+        "\nWiM\n" +
+        "\nSaveQuit: press Insert";
     public FileManager()
     {
         endPosY = Console.WindowWidth - 2;
         Path = @"";
         dirs = new List<FileSystemInfo>();
     }
+
     void PrintFileInfo()
     {
         Console.SetCursorPosition(namePos, 2);
@@ -102,6 +115,8 @@ class FileManager
         ClearInfo();
         PrintFileInfo();
         UpgradeDirectoryList();
+        Console.SetCursorPosition(0, 0);
+        Console.WriteLine(info);
         Console.SetCursorPosition(fileLeft, 0);
         Console.Write(Path);
         if (index == 0)
@@ -157,6 +172,8 @@ class FileManager
     {
         ClearInfo();
         PrintDriverInfo();
+        Console.SetCursorPosition(0, 0);
+        Console.WriteLine(info);
         DriveInfo[] allDrives = DriveInfo.GetDrives();
         for (int i = 0; i < allDrives.Length; i++)
         {
@@ -206,7 +223,11 @@ class FileManager
                 Path += allDrives[i - 1].Name;
                 break;
             }
-
+            if (key == ConsoleKey.Escape)
+            {
+                Console.SetCursorPosition(0, Console.WindowHeight);
+                Environment.Exit(1);
+            }
         }
         ClearFiles();
     }
@@ -242,6 +263,16 @@ class FileManager
         return Path;
     }
 
+    public void EditWithWiM(int index)
+    {
+        ClearFiles();
+        string text = File.ReadAllText(dirs[index - 1].FullName, System.Text.Encoding.UTF8);
+        WiM w = new WiM(text, new(fileLeft, 4), new(endPosY-22, fileBoard -5));
+        string res = w.Write();
+        ClearFiles();
+        File.WriteAllText(dirs[index - 1].FullName, res);
+    }
+
     public void Choose(int index)
     {
         if (index > 0)
@@ -256,15 +287,20 @@ class FileManager
             {
                 RunExe(dirs[index - 1]);
             }
-            else if (dirs[index - 1].Extension == ".zip")
-            {
-                ClearFiles();
-                OpenZip(index);
-            }
             else
             {
                 OpenDefault(Path + $@"{dirs[index - 1].Name}");
+
+                /*try
+                {
+                    EditWithWiM(index);
+                }
+                catch
+                {
+                    OpenDefault(Path + $@"{dirs[index - 1].Name}");
+                }*/
             }
+
         }
         else if (index == 0)
         {
@@ -272,13 +308,18 @@ class FileManager
             OpenBackFolder();
         }
     }
-
+    public void ClearInput()
+    {
+        Console.SetCursorPosition(0, fileBoard + 2);
+        for(int i = 0; i < Console.WindowWidth - 1; i++)
+            Console.Write(" ");
+    }
     public void CreateFile()
     {
         string? name = "";
-        Console.SetCursorPosition(50, 0);
-        Console.WriteLine("Введите имя и расширение (example.txt): ");
-        Console.SetCursorPosition(50, 1);
+        
+        Console.SetCursorPosition(0, fileBoard+2);
+        Console.Write("Введите имя и расширение (без расширения создастся папка): ");
         name = Console.ReadLine();
 
         if (name?.IndexOf(".") == -1)
@@ -286,6 +327,7 @@ class FileManager
         else
             File.Create(Path + name);
         ClearFiles();
+        ClearInput();
     }
 
     public void DeleteFile(int index)
@@ -300,15 +342,16 @@ class FileManager
     public void Zip()
     {
         string? name = "";
-        Console.SetCursorPosition(50, 0);
-        Console.WriteLine("Введите имя архива (example): ");
-        Console.SetCursorPosition(50, 1);
+        Console.SetCursorPosition(0, fileBoard + 2);
+        Console.Write("Введите имя архива (example): ");
         name = Console.ReadLine();
 
         string tmp = Path;
         ZipFile.CreateFromDirectory(Path, OpenBackFolder() + $"{name}.zip");
         File.Move(Path + $"{name}.zip", tmp + $"{name}.zip");
         Path = tmp;
+        ClearInput();
+
     }
 
     public void UnZip(int index)
@@ -316,19 +359,6 @@ class FileManager
         ZipFile.ExtractToDirectory(dirs[index - 1].FullName, Path);
     }
 
-    public void OpenZip(int index)
-    {
-        Console.WriteLine(Path);
-        Console.WriteLine("\n");
-
-        ZipArchive z = ZipFile.Open(dirs[index - 1].FullName, ZipArchiveMode.Read);
-        ReadOnlyCollection<ZipArchiveEntry> r = z.Entries;
-        foreach (ZipArchiveEntry entry in r)
-        {
-            Console.WriteLine(entry);
-        }
-        Console.ReadKey(true);
-    }
 
     static void ClearBuffer()
     {
@@ -340,54 +370,69 @@ class FileManager
 
     public void Start()
     {
-        int i = 0;
-        Console.CursorVisible = false;
-        ConsoleKey key = ConsoleKey.Spacebar;
-        while (key != ConsoleKey.Escape)
+        try
         {
-            PrintShield();
-            ClearBuffer();
-            if (key == ConsoleKey.DownArrow)
+            int i = 0;
+            Console.CursorVisible = false;
+            Console.SetCursorPosition(0, fileBoard + 1);
+            Console.WriteLine("Input: ");
+            ConsoleKey key = ConsoleKey.Spacebar;
+            while (key != ConsoleKey.Escape)
             {
-                i++;
-                if (i > dirs.Count)
-                    i = dirs.Count;
-                else if(i - ind >= fileBoard - 4)
+                PrintShield();
+                ClearBuffer();
+                if (key == ConsoleKey.DownArrow)
                 {
-                    ind++;
+                    i++;
+                    if (i > dirs.Count)
+                        i = dirs.Count;
+                    else if (i - ind >= fileBoard - 4)
+                    {
+                        ind++;
+                    }
                 }
-            }
-            if (key == ConsoleKey.UpArrow)
-            {
-                i--;
-                if (i < 0)
+                if (key == ConsoleKey.UpArrow)
+                {
+                    i--;
+                    if (i < 0)
+                        i = 0;
+                    else if (i < ind + 1)
+                    {
+                        ind--;
+                        if (ind < 0)
+                            ind = 0;
+                    }
+                }
+
+                if (Path == "")
+                    DriversControl();
+                PrintDirectoryList(i);
+
+                key = Console.ReadKey(true).Key;
+                if (key == ConsoleKey.Enter)
+                {
+                    Choose(i);
                     i = 0;
-                else if (i < ind + 1)
-                {
-                    ind--;
-                    if (ind < 0)
-                        ind = 0;
                 }
+                if (key == ConsoleKey.N)
+                    CreateFile();
+                if (key == ConsoleKey.Z)
+                    Zip();
+                if (key == ConsoleKey.U)
+                    UnZip(i);
+                if (key == ConsoleKey.Delete)
+                    DeleteFile(i);
             }
-
-            if (Path == "")
-                DriversControl();
-            PrintDirectoryList(i);
-
-            key = Console.ReadKey(true).Key;
-            if (key == ConsoleKey.Enter)
-            {
-                Choose(i);
-                i = 0;
-            }
-            if (key == ConsoleKey.N)
-                CreateFile();
-            if (key == ConsoleKey.Z)
-                Zip();
-            if (key == ConsoleKey.U)
-                UnZip(i);
-            if (key == ConsoleKey.Delete)
-                DeleteFile(i);
+        }
+        catch (Exception ex)
+        {
+            Console.SetCursorPosition(0, fileBoard + 1);
+            Console.WriteLine("Output: ");
+            Console.SetCursorPosition(0, fileBoard + 2);
+            Console.WriteLine(ex.Message);
+            Console.ReadKey(true);
+            ClearInput();
+            Start();
         }
     }
 
