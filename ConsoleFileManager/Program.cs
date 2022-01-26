@@ -1,10 +1,10 @@
 ﻿using CFM;
-int x = 50,
-    y = 20;
+int x = 100,
+    y = 15;
 Shield();
 string str;
 Restore();
-WiM wm = new(str, new(1,1), new(x,y));
+WiM wm = new(str, new(1, 1), new(x, y));
 str = wm.Write();
 Save();
 

@@ -6,19 +6,27 @@ namespace CFM
         int x, y;
         int _currentPos;
         string _text;
+        private int ind;
+
         Point StartPos { get; set; }
         Point EndPos { get; set; }
+
         public WiM(string text, Point startPos, Point endPos)
         {
             this.StartPos = startPos;
             this.EndPos = endPos;
             _text = text;
-            _currentPos = _text.Length;
+            _currentPos = 0;
         }
         private void PressEnter()
         {
             _currentPos++;
             _text = _text.Insert(_currentPos - 1, "\n");
+            Console.CursorVisible = false;
+            SetCurPos();
+            Console.CursorVisible = true;
+            if (y >= EndPos.Y + ind)
+                ind++;
         }
         private void PressBackspace()
         {
@@ -26,11 +34,16 @@ namespace CFM
             {
                 _text = _text.Remove(_currentPos - 1, 1);
                 _currentPos--;
+                Console.CursorVisible = false;
+                SetCurPos();
+                Console.CursorVisible = true;
+                if (y < StartPos.Y + ind && ind > 0)
+                    ind--;
             }
         }
         private void PressDelete()
         {
-            if (_currentPos + 1 > 0)
+            if (_currentPos + 1 > 0 && _text.Length - 1 > 0)
                 _text = _text.Remove(_currentPos, 1);
         }
         private void PressArrow(ConsoleKey key)
@@ -49,11 +62,15 @@ namespace CFM
                     if (y > 1)
                     {
                         y--;
+                        if (y < StartPos.Y + ind && ind > 0)
+                            ind--;
                         FindCurPos();
                     }
                     break;
                 case ConsoleKey.DownArrow:
                     y++;
+                    if (y >= EndPos.Y + ind)
+                        ind++;
                     FindCurPos();
                     break;
             }
@@ -66,7 +83,7 @@ namespace CFM
                 _currentPos = i;
                 if (tY == y - 1 && tX == x)
                     break;
-                else if(tY == y - 1 &&
+                else if (tY == y - 1 &&
                     (StartPos.X + tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0'))
                 {
                     break;
@@ -85,7 +102,7 @@ namespace CFM
         {
             x = StartPos.X;
             y = StartPos.Y;
-            for (int i = 0; i < _text.Length; i++)
+            for (int i = 0; i < _text.Length; i++, x++)
             {
                 if (i == _currentPos)
                     break;
@@ -94,9 +111,8 @@ namespace CFM
                     x = 0;
                     y++;
                 }
-                x++;
             }
-            Console.SetCursorPosition(x, y);
+            Console.SetCursorPosition(x, y - ind);
         }
         public void Read()
         {
@@ -105,15 +121,30 @@ namespace CFM
             Console.CursorVisible = false;
             for (int i = 0; i < _text.Length; i++)
             {
-                Console.SetCursorPosition(StartPos.X + x, StartPos.Y + y);
-                Console.Write(_text[i]);
-                x++;
-                if (_text[i] == '\n' || _text[i] == '\0')
+                if (y >= ind)
                 {
-                    for (int j = x + StartPos.X; x < EndPos.X - 1; j++, x++)
+                    Console.SetCursorPosition(StartPos.X + x, StartPos.Y + y - ind);
+                    Console.Write(_text[i]);
+                    x++;
+                    if (_text[i] == '\n' || _text[i] == '\0')
                     {
-                        Console.SetCursorPosition(j - 1, StartPos.Y + y);
-                        Console.Write(' ');
+                        for (int j = x + StartPos.X; x < EndPos.X - 1; j++, x++)
+                        {
+                            Console.SetCursorPosition(j - 1, StartPos.Y + y - ind);
+                            Console.Write(' ');
+                        }
+                    }
+                }
+                else
+                {
+                    while(y < ind)
+                    {
+                        i++;
+                        if (_text[i] == '\n' || _text[i] == '\0')
+                        {
+                            y++;
+                        }
+
                     }
                 }
                 if (StartPos.X + x >= EndPos.X - 1)
@@ -121,31 +152,47 @@ namespace CFM
                     y++;
                     x = 0;
                 }
+                if (y >= this.y && y > EndPos.Y - StartPos.Y + ind - 1)
+                    break;
             }
             FeelSpace(x, y);
             Console.CursorVisible = true;
         }
         private void FeelSpace(int x, int y)
         {
-            for (int j = x + StartPos.X; j < EndPos.X; j++)
+            if (y >= ind)
             {
-                Console.SetCursorPosition(j, StartPos.Y + y);
-                Console.Write(' ');
-            }
-            for (int i = StartPos.Y + y; i < StartPos.Y; i++)
-            {
-                for (int j = StartPos.X; j < EndPos.X; j++)
+                for (int i = StartPos.Y + y - ind + 1; i < EndPos.Y - 1; i++)
                 {
-                    Console.SetCursorPosition(i, j);
-                    Console.Write(' ');
+                    for (int j = StartPos.X; j < EndPos.X; j++)
+                    {
+                        Console.SetCursorPosition(j, i);
+                        Console.Write(' ');
+                    }
                 }
             }
         }
-        static void ClearBuffer()
+        public static void ClearBuffer()
         {
             while (Console.KeyAvailable)
             {
                 Console.ReadKey(false);
+            }
+        }
+        private void ProcButt(ConsoleKeyInfo key)
+        {
+            if (key.Key == ConsoleKey.Enter)
+                PressEnter();
+            else if (key.Key == ConsoleKey.Backspace)
+                PressBackspace();
+            else if ((int)key.Key >= 37 && (int)key.Key <= 40)
+                PressArrow(key.Key);
+            else if (key.Key == ConsoleKey.Delete)
+                PressDelete();
+            else
+            {
+                _currentPos++;
+                _text = _text.Insert(_currentPos - 1, $"{key.KeyChar}");
             }
         }
         public string Write()
@@ -157,21 +204,9 @@ namespace CFM
                 Read();
                 SetCurPos();
                 key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Enter)
-                    PressEnter();
-                else if (key.Key == ConsoleKey.Backspace)
-                    PressBackspace();
-                else if ((int)key.Key >= 37 && (int)key.Key <= 40)
-                    PressArrow(key.Key);
-                else if (key.Key == ConsoleKey.Delete)
-                    PressDelete();
-                else if (key.Key == ConsoleKey.Insert)
+                if (key.Key == ConsoleKey.Insert)
                     return _text;
-                else
-                {
-                    _currentPos++;
-                    _text = _text.Insert(_currentPos - 1, $"{key.KeyChar}");
-                }
+                ProcButt(key);
             }
         }
     }
