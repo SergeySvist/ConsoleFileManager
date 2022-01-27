@@ -20,8 +20,8 @@ namespace CFM
         }
         private void PressEnter()
         {
+            _text = _text.Insert(_currentPos, "\n");
             _currentPos++;
-            _text = _text.Insert(_currentPos - 1, "\n");
             Console.CursorVisible = false;
             SetCurPos();
             Console.CursorVisible = true;
@@ -59,7 +59,7 @@ namespace CFM
                         _currentPos--;
                     break;
                 case ConsoleKey.UpArrow:
-                    if (y > 1)
+                    if (y > StartPos.Y)
                     {
                         y--;
                         if (y < StartPos.Y + ind && ind > 0)
@@ -69,7 +69,7 @@ namespace CFM
                     break;
                 case ConsoleKey.DownArrow:
                     y++;
-                    if (y >= EndPos.Y + ind)
+                    if (y >= EndPos.Y + StartPos.Y + ind)
                         ind++;
                     FindCurPos();
                     break;
@@ -77,22 +77,23 @@ namespace CFM
         }
         private void FindCurPos()
         {
-            int tX = 0, tY = 0;
+            int tX = StartPos.X, tY = StartPos.Y;
             for (int i = 0; i < _text.Length; i++)
             {
                 _currentPos = i;
-                if (tY == y - 1 && tX == x)
+                if (tY  == y && tX == x)
                     break;
-                else if (tY == y - 1 &&
-                    (StartPos.X + tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0'))
+                else if (tY == y &&
+                    (tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0'))
                 {
                     break;
                 }
-                if (StartPos.X + tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
+                if ( tX >= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
                 {
-                    tX = 0;
+                    tX = StartPos.X;
                     tY++;
                 }
+                else
                 tX++;
             }
             x = tX;
@@ -106,13 +107,13 @@ namespace CFM
             {
                 if (i == _currentPos)
                     break;
-                if (StartPos.X + x >= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
+                if (x + 1>= EndPos.X || _text[i] == '\n' || _text[i] == '\0')
                 {
                     x = StartPos.X;
                     y++;
                 }
             }
-            Console.SetCursorPosition(x, y - ind);
+            Console.SetCursorPosition(x - 1, y - ind);
         }
         public void Read()
         {
@@ -121,6 +122,11 @@ namespace CFM
             Console.CursorVisible = false;
             for (int i = 0; i < _text.Length; i++)
             {
+                if (_text[i] == '\r')
+                {
+                    Console.Write('#');
+                    i++;
+                }
                 if (y >= ind)
                 {
                     Console.SetCursorPosition(StartPos.X + x, StartPos.Y + y - ind);
@@ -128,9 +134,9 @@ namespace CFM
                     x++;
                     if (_text[i] == '\n' || _text[i] == '\0')
                     {
-                        for (int j = x + StartPos.X; x < EndPos.X - 1; j++, x++)
+                        for (int j = x + StartPos.X; j < EndPos.X - 1; j++, x++)
                         {
-                            Console.SetCursorPosition(j - 1, StartPos.Y + y - ind);
+                            Console.SetCursorPosition(j - 1, StartPos.Y +y - ind);
                             Console.Write(' ');
                         }
                     }
@@ -162,9 +168,9 @@ namespace CFM
         {
             if (y >= ind)
             {
-                for (int i = StartPos.Y + y - ind + 1; i < EndPos.Y - 1; i++)
+                for (int i = StartPos.Y + y - ind + 1; i < EndPos.Y - StartPos.Y; i++)
                 {
-                    for (int j = StartPos.X; j < EndPos.X; j++)
+                    for (int j = StartPos.X; j < EndPos.X - StartPos.X; j++)
                     {
                         Console.SetCursorPosition(j, i);
                         Console.Write(' ');

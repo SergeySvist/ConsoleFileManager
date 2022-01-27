@@ -267,7 +267,7 @@ class FileManager
     {
         ClearFiles();
         string text = File.ReadAllText(dirs[index - 1].FullName, System.Text.Encoding.UTF8);
-        WiM w = new WiM(text, new(fileLeft, 4), new(endPosY-22, fileBoard -5));
+        WiM w = new WiM(text, new(fileLeft, 4), new(fileLeft + endPosY - 25, 17));
         string res = w.Write();
         ClearFiles();
         File.WriteAllText(dirs[index - 1].FullName, res);
@@ -289,16 +289,23 @@ class FileManager
             }
             else
             {
-                OpenDefault(Path + $@"{dirs[index - 1].Name}");
+                //OpenDefault(Path + $@"{dirs[index - 1].Name}");
 
-                /*try
+                try
                 {
                     EditWithWiM(index);
                 }
-                catch
+                catch(Exception ex)
                 {
+                    Console.SetCursorPosition(0, fileBoard + 1);
+                    Console.WriteLine("Output: ");
+                    Console.SetCursorPosition(0, fileBoard + 2);
+                    Console.WriteLine(ex);
+                    Console.ReadKey(true);
+                    ClearInput();
+                    ClearFiles();
                     OpenDefault(Path + $@"{dirs[index - 1].Name}");
-                }*/
+                }
             }
 
         }
