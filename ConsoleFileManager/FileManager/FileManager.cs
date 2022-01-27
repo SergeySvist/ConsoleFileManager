@@ -267,7 +267,7 @@ class FileManager
     {
         ClearFiles();
         string text = File.ReadAllText(dirs[index - 1].FullName, System.Text.Encoding.UTF8);
-        WiM w = new WiM(text, new(fileLeft, 4), new(fileLeft + endPosY - 25, fileBoard-2));
+        WiM w = new WiM(text, new(fileLeft, 4), new(fileLeft + endPosY - 25, fileBoard-5));
         string res = w.Write();
         ClearFiles();
         File.WriteAllText(dirs[index - 1].FullName, res);
@@ -287,25 +287,14 @@ class FileManager
             {
                 RunExe(dirs[index - 1]);
             }
+            else if (dirs[index - 1].Extension == ".txt")
+            {
+                EditWithWiM(index);
+            }
             else
             {
-                //OpenDefault(Path + $@"{dirs[index - 1].Name}");
+                OpenDefault(Path + $@"{dirs[index - 1].Name}");
 
-                try
-                {
-                    EditWithWiM(index);
-                }
-                catch(Exception ex)
-                {
-                    Console.SetCursorPosition(0, fileBoard + 1);
-                    Console.WriteLine("Output: ");
-                    Console.SetCursorPosition(0, fileBoard + 2);
-                    Console.WriteLine(ex.Message);
-                    Console.ReadKey(true);
-                    ClearInput();
-                    ClearFiles();
-                    OpenDefault(Path + $@"{dirs[index - 1].Name}");
-                }
             }
 
         }
@@ -317,9 +306,14 @@ class FileManager
     }
     public void ClearInput()
     {
-        Console.SetCursorPosition(0, fileBoard + 2);
-        for(int i = 0; i < Console.WindowWidth - 1; i++)
-            Console.Write(" ");
+        for (int i = 0; i < Console.WindowHeight-fileBoard; i++)
+        {
+            for (int j = 0; j < Console.WindowWidth - 1; j++)
+            {
+                Console.SetCursorPosition(j, fileBoard + i);
+                Console.Write(" ");
+            }
+        }
     }
     public void CreateFile()
     {
@@ -332,7 +326,11 @@ class FileManager
         if (name?.IndexOf(".") == -1)
             Directory.CreateDirectory(Path + name);
         else
-            File.Create(Path + name);
+        {
+            FileStream f = File.Create(Path + name);
+            f.Close();
+        }
+
         ClearFiles();
         ClearInput();
     }
@@ -411,7 +409,7 @@ class FileManager
                     }
                 }
 
-                if (Path == "")
+                if (Path == @"")
                     DriversControl();
                 PrintDirectoryList(i);
 
