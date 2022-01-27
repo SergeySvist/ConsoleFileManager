@@ -267,7 +267,7 @@ class FileManager
     {
         ClearFiles();
         string text = File.ReadAllText(dirs[index - 1].FullName, System.Text.Encoding.UTF8);
-        WiM w = new WiM(text, new(fileLeft, 4), new(fileLeft + endPosY - 25, 17));
+        WiM w = new WiM(text, new(fileLeft, 4), new(fileLeft + endPosY - 25, fileBoard-2));
         string res = w.Write();
         ClearFiles();
         File.WriteAllText(dirs[index - 1].FullName, res);
@@ -300,7 +300,7 @@ class FileManager
                     Console.SetCursorPosition(0, fileBoard + 1);
                     Console.WriteLine("Output: ");
                     Console.SetCursorPosition(0, fileBoard + 2);
-                    Console.WriteLine(ex);
+                    Console.WriteLine(ex.Message);
                     Console.ReadKey(true);
                     ClearInput();
                     ClearFiles();
@@ -420,6 +420,7 @@ class FileManager
                 {
                     Choose(i);
                     i = 0;
+                    ind = 0;
                 }
                 if (key == ConsoleKey.N)
                     CreateFile();
@@ -438,6 +439,7 @@ class FileManager
             Console.SetCursorPosition(0, fileBoard + 2);
             Console.WriteLine(ex.Message);
             Console.ReadKey(true);
+            OpenBackFolder();
             ClearInput();
             Start();
         }
